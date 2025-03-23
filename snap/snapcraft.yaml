@@ -1,0 +1,151 @@
+name: caddy-dilyn
+base: core24
+adopt-info: caddy
+summary: Fast, multi-platform web server with automatic HTTPS
+description: |
+  ## Unofficial snap ##
+
+  Caddy is a powerful, extensible platform to serve your sites, services, and
+  apps, written in Go.
+
+  Most people use Caddy as a web server or proxy, but at its core, Caddy is a
+  server of servers. With the requisite modules, it can take on the role of any
+  long-running process!
+
+  Configuration is both dynamic and exportable with Caddy's API. Although no
+  config file is required, you can still use them; most people's favorite way of
+  configuring Caddy is using the Caddyfile. The format of the config document
+  takes many forms with config adapters, but Caddy's native config language is
+  JSON.
+
+  ---
+
+  This particular snap has a few key features:
+  1) Intended for use on Ubuntu Core
+    caddy is setup as a daemon so that Ubuntu Core machines can use it!
+    This means that the configuration is intended to be passed in a fashion
+    useful for Ubuntu Core devices, snap config values. Instead of creating a
+    Caddyfile, set the JSON corresponding to your desired configuration as a
+    config value via:
+
+    snap set caddy config='{...}'
+
+    caddy-wrapper will consume this configuration value and pass that to caddy.
+
+  2) Useful with other snaps
+    Instead of serving the content from the caddy snap itself (also supported),
+    instead other snaps can provide the content caddy serves. As long as the
+    implement the caddy-content slot which properly exposes the file hierarchy,
+    caddy can access that file tree and serve the content! To do so, run:
+
+    snap connect caddy:caddy-content <snap>:caddy-content
+
+    Provider snaps should expose the content as READ to "<foo>", and that
+    content should be available to caddy at "$SNAP/var/www/<foo>"
+
+  3) Extensible
+    A check is involved just in-case end-users run caddy add-package. As this
+    behaviour modifies the caddy binary itself and snaps are read-only, the caddy
+    binary is instead copied to the writable area and that modified caddy binary
+    is the one being used to add and remove modules. Whether the modified caddy
+    binary is the one being used or not can be checked (or set) with:
+
+    snap get caddy modified
+
+grade: devel
+confinement: devmode
+
+# Reach out to me, not caddy. This is unofficial.
+issues: https://github.com/dilyn-corner/caddy-snap/issues
+website: https://github.com/dilyn-corner/caddy-snap/tree/main
+license: "Apache-2.0 and CC-BY-NC-SA-4.0"
+
+# Build for every platform but allow cross-building
+# golang makes this so easy
+platforms:
+  amd64:
+  arm64:
+      build-on:  [amd64, arm64]
+      build-for: [arm64]
+  ppc64el:
+      build-on:  [amd64, ppc64el]
+      build-for: [ppc64el]
+  riscv64:
+      build-on:  [amd64, riscv64]
+      build-for: [riscv64]
+  s390x:
+      build-on:  [amd64, s390x]
+      build-for: [s390x]
+
+plugs:
+  caddy-content:
+    interface: content
+    target: "$SNAP/var/www"
+  
+
+apps:
+  # caddy exposes caddy for e.g. debugging, desktop usage
+  caddy:
+    command: usr/bin/caddy-wrapper.sh cli
+    plugs: &_plugs [caddy-content, network-bind]
+    # Caddy likes to store files, it's useful if they persist across revisions
+    # You'll find things like certs in these locations
+    environment: &_env
+      XDG_DATA_HOME: "${SNAP_COMMON}/data"
+      XDG_CONFIG_HOME: "${SNAP_COMMON}/data"
+
+  # server exists to turn caddy into a daemon for e.g. Ubuntu Core devices
+  server:
+    command: usr/bin/caddy-wrapper.sh run
+    daemon: simple
+    reload-command: usr/bin/caddy-wrapper.sh reload
+    plugs: *_plugs
+    environment: *_env
+
+parts:
+  # Build caddy from source because having newer features is more useful
+  caddy:
+    plugin: nil
+    source: https://github.com/caddyserver/caddy
+    source-type: git
+    source-depth: 1
+    source-tag: v2.9.1
+    # latest/edge is required to get `caddy add-package` to function properly
+    # `caddy add-package` is useful because it enables extending caddy features
+    # Of course, it modifies the caddy binary; there are workarounds implemented
+    # in the scripts and hooks for this :)
+    build-snaps: [go/latest/edge]
+    # Use upx for binary compression
+    build-packages: [upx-ucl]
+    # ppc is the only architecture we support with a different GOARCH
+    build-environment:
+      - GOARCH: ${CRAFT_ARCH_BUILD_FOR}
+      - on amd64 to ppc64el:
+        - GOARCH: ppc64le
+    override-build: |
+      # Build caddy. Strip the binary to save ~40% on size
+      go build           \
+        -trimpath        \
+        -modcacherw      \
+        -ldflags "-s -w" \
+        -o "${CRAFT_PART_INSTALL}/caddy" ./cmd/caddy
+
+      # Set the version based on the tag of caddy built
+      craftctl set version="$(git describe --tags)"
+
+      # upx doesn't support compression on some architectures
+      # upx compresses around 20-30% depending on the architecture
+      if [ "${CRAFT_ARCH_BUILD_FOR}" != "riscv64" ] &&\
+         [ "${CRAFT_ARCH_BUILD_FOR}" != "s390x" ]; then
+        upx --best --lzma "${CRAFT_PART_INSTALL}/caddy"
+      fi
+    organize:
+      caddy: usr/bin/caddy
+
+  # This part dumps the relevant scripts we supply for using caddy
+  # Investigate them for more details :)
+  scripts:
+    plugin: dump
+    source: src/
+    organize:
+      '*': usr/bin/

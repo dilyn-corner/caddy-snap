@@ -1,0 +1,10 @@
+#!/bin/sh -eux
+
+# Do nothing for now
+
+# When configuration is ran, we should regenerate the config
+# _config=$(snapctl get config)
+# echo "$_config" > "${SNAP_COMMON}/caddy.json"
+
+# Should reload caddy when config changes:
+# snapctl restart "${SNAP_INSTANCE_NAME}.server"
