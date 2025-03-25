@@ -45,16 +45,19 @@ cli() {
   esac
 }
 
+# Avoid downtime when restarting the service
 reload() {
   $_caddy reload --config "${SNAP_COMMON}/caddy.json"
 }
 
+# This runs the caddy server
 run() {
   $_caddy run \
     --config  "${SNAP_COMMON}/caddy.json" \
     --pidfile "${SNAP_COMMON}/caddy.pid"
 }
 
+# If the user has modified the caddy binary via modules, use it instead
 _caddy="${SNAP}/usr/bin/caddy"
 [ "$(snapctl get modified)" = "true" ] && _caddy="${SNAP_COMMON}/caddy-mod"
 
