@@ -52,6 +52,16 @@ description: |
 
     snap get caddy modified
 
+    Modules can be specified by the gadget snap which caddy will fetch on first
+    installation via the default-configure hook.
+
+  Importantly, configuration is handled via snap config values. Because Caddy's
+  API uses JSON for configuration, this is a natural choice. For an example of a
+  simple test, refer to the project README on the website.
+
+  Of course, for users opting to use the CLI directly any method for supplying a
+  configuration can be used.
+
 grade: devel
 confinement: devmode
 
