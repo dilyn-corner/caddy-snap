@@ -1,0 +1,6 @@
+#!/bin/sh -eux
+
+# caddy modules can be specified by the gadget snap. Fetch them.
+snapctl get -l modules | while read -r k v; do
+	[ "$k" = "Key" ] || "${SNAP_INSTANCE_NAME}.caddy" add-package "$v"
+done
