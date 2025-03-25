@@ -8,6 +8,7 @@ primarily for use on Ubuntu Core.
 
 This particular snap has a few key features:
 1) Intended for use on Ubuntu Core
+
   caddy is setup as a daemon so that Ubuntu Core machines can use it! This means
   that the configuration is intended to be passed in a fashion useful for Ubuntu
   Core devices, snap config values. Instead of creating a Caddyfile, set the
@@ -19,6 +20,7 @@ This particular snap has a few key features:
   caddy-wrapper will consume this configuration value and pass that to caddy.
 
 2) Useful with other snaps
+
   Instead of serving the content from the caddy snap itself (also supported),
   instead other snaps can provide the content caddy serves. As long as the
   implement the caddy-content slot which properly exposes the file hierarchy,
@@ -32,6 +34,7 @@ This particular snap has a few key features:
   should be available to caddy at `"$SNAP/var/www/<foo>"`
 
 3) Extensible
+
   A check is involved just in-case end-users run `caddy add-package`. As this
   behaviour modifies the caddy binary itself and snaps are read-only, the caddy
   binary is instead copied to the writable area and that modified caddy binary
