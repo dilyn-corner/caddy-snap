@@ -68,7 +68,7 @@ confinement: devmode
 # Reach out to me, not caddy. This is unofficial.
 issues: https://github.com/dilyn-corner/caddy-snap/issues
 website: https://github.com/dilyn-corner/caddy-snap/tree/main
-license: "Apache-2.0 and CC-BY-NC-SA-4.0"
+license: "Apache-2.0 AND CC-BY-NC-SA-4.0"
 
 # Build for every platform but allow cross-building
 # golang makes this so easy
