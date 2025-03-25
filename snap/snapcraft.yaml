@@ -94,8 +94,8 @@ plugs:
   
 
 apps:
-  # caddy exposes caddy for e.g. debugging, desktop usage
-  caddy:
+  # caddy-dilyn exposes caddy for e.g. debugging, desktop usage
+  caddy-dilyn:
     command: usr/bin/caddy-wrapper.sh cli
     plugs: &_plugs [caddy-content, network-bind]
     # Caddy likes to store files, it's useful if they persist across revisions
