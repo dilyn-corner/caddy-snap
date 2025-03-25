@@ -1,10 +1,33 @@
 #!/bin/sh -eux
 
-# Do nothing for now
+config_changes=0
+config_file="${SNAP_COMMON}/caddy.json"
 
-# When configuration is ran, we should regenerate the config
-# _config=$(snapctl get config)
-# echo "$_config" > "${SNAP_COMMON}/caddy.json"
+# Ensure an initial configuration exists
+touch "$config_file"
 
-# Should reload caddy when config changes:
-# snapctl restart "${SNAP_INSTANCE_NAME}.server"
+# If the 'modified' value becomes unset, the user wants to stop using the
+# modified caddy binary
+snapctl get modified || rm -f "${SNAP_COMMON}/caddy-mod"
+
+# If the caddy configuration has changed, regenerate the config
+_config=$(snapctl get config)
+# If there is no configuration, exit
+[ -n "$_config" ] || {
+  snapctl stop --disable "${SNAP_INSTANCE_NAME}.server"
+  exit 0
+}
+echo "$_config" > "${config_file}.new"
+
+# Check if the configuration is different
+# If it is, backup the previous one and replace, mark that the config changed
+if ! diff "${config_file}.new" "${config_file}"; then
+  mv -f "${config_file}"     "${config_file}.sav"
+  mv -f "${config_file}.new" "${config_file}"
+  config_changes=1
+else
+    rm -f "${config_file}.new"
+fi
+
+# Restart the caddy server if we've changed the caddy configuration
+[ $config_changes = 0 ] || snapctl restart "${SNAP_INSTANCE_NAME}.server"
