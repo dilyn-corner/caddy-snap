@@ -1,0 +1,7 @@
+#!/bin/sh -eux
+
+# Make some initial directories
+mkdir -p "${SNAP_COMMON}/www"
+
+# Disable the caddy service if no configuration is available
+snapctl get config || snapctl stop --disable "${SNAP_INSTANCE_NAME}.server"
