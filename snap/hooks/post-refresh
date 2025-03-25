@@ -1,0 +1,19 @@
+#!/bin/sh -eux
+
+[ "$(snapctl get modified)" = "false" ] || {
+  # Backup the modified caddy binary
+  # It's more important that the caddy binary remains functional with all
+  # modules than that caddy is updated
+  mv -f "${SNAP_COMMON}/caddy-mod" "${SNAP_COMMON}/caddy-mod.bkp"
+
+  snapctl get -l module | while read -r k v; do
+    [ "$k" = "Key" ] ||\
+      if ! "${SNAP_INSTANCE_NAME}.caddy" add-package "$v"; then
+        # Bail on failure.
+        "${SNAP_COMMON}/caddy-mod.bkp" "${SNAP_COMMON}/caddy-mod"
+        # Don't cause refreshes to fail, but notify users something is wrong
+        snapctl set module.update-failed=true
+        break
+    fi
+  done
+}
