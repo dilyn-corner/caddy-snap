@@ -73,27 +73,26 @@ To test the server, run:
 ```sh
   echo "Hello, world!" | sudo tee -a /var/snap/caddy-dilyn/common/www/index.html
   snap set caddy-dilyn config='{
-    "apps": {
-			"http": {
-				"servers": {
-					"myserver": {
-						"listen": [
-							":2020"
-						],
-						"routes": [
-							{
-								"handle": [
-									{
-										"handler": "file_server",
-										"root": "/var/snap/caddy-dilyn/common/www"
-									}
-								]
-							}
-						]
-					}
-				}
-			}
-		}
+  "apps": {
+    "http": {
+      "servers": {
+        "myserver": {
+          "listen": [
+              ":2020"
+          ],
+          "routes": [
+            {
+              "handle": [
+                {
+                  "handler": "file_server",
+                  "root": "/var/snap/caddy-dilyn/common/www"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
   }'
 ```
 
