@@ -62,13 +62,13 @@ description: |
   Of course, for users opting to use the CLI directly any method for supplying a
   configuration can be used.
 
-grade: devel
-confinement: devmode
+grade: stable
+confinement: strict
 
 # Reach out to me, not caddy. This is unofficial.
 issues: https://github.com/dilyn-corner/caddy-snap/issues
 website: https://github.com/dilyn-corner/caddy-snap/tree/main
-license: "Apache-2.0 AND CC-BY-NC-SA-4.0"
+license: "Apache-2.0 AND CC-BY-NC-SA-4.0 AND MIT"
 
 # Build for every platform but allow cross-building
 # golang makes this so easy
@@ -97,7 +97,7 @@ apps:
   # caddy-dilyn exposes caddy for e.g. debugging, desktop usage
   caddy-dilyn:
     command: usr/bin/caddy-wrapper.sh cli
-    plugs: &_plugs [caddy-content, network-bind]
+    plugs: &_plugs [caddy-content, network-bind, removable-media]
     # Caddy likes to store files, it's useful if they persist across revisions
     # You'll find things like certs in these locations
     environment: &_env
@@ -116,10 +116,6 @@ parts:
   # Build caddy from source because having newer features is more useful
   caddy:
     plugin: nil
-    source: https://github.com/caddyserver/caddy
-    source-type: git
-    source-depth: 1
-    source-tag: v2.9.1
     # latest/edge is required to get `caddy add-package` to function properly
     # `caddy add-package` is useful because it enables extending caddy features
     # Of course, it modifies the caddy binary; there are workarounds implemented
@@ -132,16 +128,21 @@ parts:
       - GOARCH: ${CRAFT_ARCH_BUILD_FOR}
       - on amd64 to ppc64el:
         - GOARCH: ppc64le
+      # For xcaddy
+      - GOPATH: "${CRAFT_PART_BUILD}"
+      - PATH: "${CRAFT_PART_BUILD}/bin:$PATH"
+      - XCADDY_GO_BUILD_FLAGS: "-ldflags '-w -s'"
     override-build: |
-      # Build caddy. Strip the binary to save ~40% on size
-      go build           \
-        -trimpath        \
-        -modcacherw      \
-        -ldflags "-s -w" \
-        -o "${CRAFT_PART_INSTALL}/caddy" ./cmd/caddy
+      # Get xcaddy to build caddy
+      go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      xcaddy build \
+        --with github.com/mholt/caddy-dynamicdns \
+        --with github.com/caddy-dns/porkbun      \
+        --output "${CRAFT_PART_INSTALL}/caddy"
 
       # Set the version based on the tag of caddy built
-      craftctl set version="$(git describe --tags)"
+      craftctl set version="$("${CRAFT_PART_INSTALL}/caddy" --version | cut -d' ' -f1)"
 
       # upx doesn't support compression on some architectures
       # upx compresses around 20-30% depending on the architecture
