@@ -97,7 +97,7 @@ apps:
   # caddy-dilyn exposes caddy for e.g. debugging, desktop usage
   caddy-dilyn:
     command: usr/bin/caddy-wrapper.sh cli
-    plugs: &_plugs [caddy-content, network-bind]
+    plugs: &_plugs [caddy-content, network-bind, removable-media]
     # Caddy likes to store files, it's useful if they persist across revisions
     # You'll find things like certs in these locations
     environment: &_env
