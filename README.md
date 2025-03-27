@@ -99,3 +99,17 @@ To test the server, run:
 The configuration file `caddy.json` is handled programmatically by caddy-dilyn's
 `configure` hook. As such, directly editing `${SNAP_COMMON}/caddy.json` is
 ill-advised and may result in an inconsistent `caddy.json`.
+
+
+## Tips
+
+Caddy's JSON configuration is quite a bit more featureful than the standard
+Caddyfile syntax allows, so it can be hard to "know" how to convert from a
+Caddyfile to JSON. Never fear! Caddy includes a way of converting a Caddyfile
+to JSON:
+
+```sh
+  caddy adapt Caddyfile | jq
+```
+
+This will produce a JSON output which can be used to configure caddy-dilyn.
